@@ -373,6 +373,7 @@ DataBufferConfigType: TypeAlias = SimpleBufferConfig | DifficultyPoolBufferConfi
 
 
 class AdvantageConfig(BaseConfig):
+    no_norm: bool = False
     global_std_norm: bool = False
     local_std_norm: bool = False
     length_weighted_mean: bool = False
