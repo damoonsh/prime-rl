@@ -27,9 +27,9 @@ def compute_advantage(
             advantages = advantages * group_size / (group_size - 1)
     if advantage_config.neg_clipped:
         advantages = torch.maximum(advantages, torch.zeros_like(advantages))
-    if advantage_config.global_std_norm:
+    if advantage_config.std_norm == 'local':
         advantages = advantages / global_std
-    elif advantage_config.local_std_norm:
+    elif advantage_config.std_norm == 'global':
         advantages = advantages / (rewards.std() + 1e-8)
     return advantages
 
@@ -38,7 +38,7 @@ def compute_advantages(
     rewards: list[float],
     completion_lengths: list[int],
     samples_per_problem: int,
-    advantage_config: AdvantageConfig,
+    advantage_config: AdvantageConfig | None,
 ) -> list[float]:
     """
     Computes advantages and statistics for logging from a flattened list of rewards for a given advantage type.
@@ -52,6 +52,8 @@ def compute_advantages(
     Returns:
         Tuple of (advantages, advantage_stats)
     """
+    if not advantage_config:
+        return rewards
     advantages = []
     assert len(rewards) % samples_per_problem == 0
     all_group_rewards = [rewards[i : i + samples_per_problem] for i in range(0, len(rewards), samples_per_problem)]
@@ -61,14 +63,11 @@ def compute_advantages(
     global_std = torch.tensor(rewards).std().item()
     for group_rewards, group_lengths in zip(all_group_rewards, all_group_lengths):
         group_rewards_tensor = torch.tensor(group_rewards)
-        if not advantage_config.no_norm:
-            group_lengths_tensor = torch.tensor(group_lengths)
-            group_advantages_tensor = compute_advantage(
-                group_rewards_tensor, group_lengths_tensor, global_std, advantage_config
-            )
-            assert len(group_advantages_tensor) == len(group_rewards_tensor)
-        else:
-            group_advantages_tensor = group_rewards_tensor
+        group_lengths_tensor = torch.tensor(group_lengths)
+        group_advantages_tensor = compute_advantage(
+            group_rewards_tensor, group_lengths_tensor, global_std, advantage_config
+        )
+        assert len(group_advantages_tensor) == len(group_rewards_tensor)
         advantages.extend(group_advantages_tensor.tolist())
     assert len(rewards) == len(advantages)
     return advantages

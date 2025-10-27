@@ -373,9 +373,7 @@ DataBufferConfigType: TypeAlias = SimpleBufferConfig | DifficultyPoolBufferConfi
 
 
 class AdvantageConfig(BaseConfig):
-    no_norm: bool = False
-    global_std_norm: bool = False
-    local_std_norm: bool = False
+    std_norm: Literal["local", "global"] | None = None
     length_weighted_mean: bool = False
     leave_one_out: bool = False
     neg_clipped: bool = False
@@ -403,7 +401,7 @@ class OrchestratorConfig(BaseSettings):
     buffer: Annotated[DataBufferConfigType, Field(discriminator="type")] = SimpleBufferConfig()
 
     # The advantage configuration
-    advantage: AdvantageConfig = AdvantageConfig()
+    advantage: AdvantageConfig | None = None
 
     # The logging configuration
     log: LogConfig = LogConfig()
