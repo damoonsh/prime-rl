@@ -66,9 +66,9 @@ def compute_advantages(
             group_advantages_tensor = compute_advantage(
                 group_rewards_tensor, group_lengths_tensor, global_std, advantage_config
             )
+            assert len(group_advantages_tensor) == len(group_rewards_tensor)
         else:
             group_advantages_tensor = group_rewards_tensor
-        assert len(group_advantages_tensor) == len(group_rewards_tensor)
         advantages.extend(group_advantages_tensor.tolist())
     assert len(rewards) == len(advantages)
     return advantages
